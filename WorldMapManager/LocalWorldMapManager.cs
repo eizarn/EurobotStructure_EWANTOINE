@@ -22,16 +22,16 @@ namespace WorldMapManager
             bypassMulticastUdp = bypassMulticast;
         }
 
-        //public void OnPhysicalPositionReceived(object sender, EventArgsLibrary.LocationArgs e)
-        //{
-        //    if (localWorldMap == null)
-        //        return;
-        //    if (robotId == e.RobotId)
-        //    {
-        //        localWorldMap.robotLocation = e.Location;
-        //        OnLocalWorldMap(robotId, localWorldMap);
-        //    }
-        //}
+        public void OnPhysicalPositionReceived(object sender, EventArgsLibrary.LocationArgs e)
+        {
+            if (localWorldMap == null)
+                return;
+            if (localWorldMap.RobotId == e.RobotId)
+            {
+                localWorldMap.robotLocation = e.Location;
+                OnLocalWorldMapForDisplayOnly(localWorldMap);
+            }
+        }
 
         DecimalJsonConverter decimalJsonConverter = new DecimalJsonConverter();
         //public void OnPerceptionReceived(object sender, EventArgsLibrary.PerceptionArgs e)

@@ -60,6 +60,7 @@ namespace TrajectoryGeneratorNonHolonomeNS
                 currentLocationRefTerrain = e.Location;
                 CalculateGhostPosition();
                 PIDPosition();
+
             }
         }
 

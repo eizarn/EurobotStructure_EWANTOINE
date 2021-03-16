@@ -176,7 +176,7 @@ namespace WorldMapManager
             catch { }
             
             /// Transfert de la globalworldmap via le Multicast UDP
-            var s = ZeroFormatterSerializer.Serialize<WorldMap.ZeroFormatterMsg>(globalWorldMap);
+            //var s = ZeroFormatterSerializer.Serialize<WorldMap.ZeroFormatterMsg>(globalWorldMap);
             OnGlobalWorldMap(globalWorldMap);
             //OnMulticastSendGlobalWorldMap(s);
             //GWMEmiseMonitoring.GWMEmiseMonitor(s.Length);

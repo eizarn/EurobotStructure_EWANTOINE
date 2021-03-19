@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Utilities;
+using Utilities; 
 
 namespace Positioning2WheelsNS
 {
@@ -13,7 +13,6 @@ namespace Positioning2WheelsNS
         int robotID = 10;
         double Tech_Sec = 1 / 50.0; //ou 50f por float
         Location posRobotRefTerrain;
- 
 
         public Positioning2Wheels(int id)
         {
@@ -22,15 +21,16 @@ namespace Positioning2WheelsNS
         }
         public void OnOdometryRobotSpeedReceived(object sender, PolarSpeedArgs e)
         {
-            // TODO : Eventuellement faire avec e.theta et non e.Vtheta
-            posRobotRefTerrain.Vx = e.Vx * Math.Cos(e.Vtheta);
-            posRobotRefTerrain.Vy = e.Vx * Math.Sin(e.Vtheta);
-            posRobotRefTerrain.Vtheta = e.Vtheta;
+            // TODO : Inverser les moteurs
 
+            posRobotRefTerrain.Vtheta = e.Vtheta;
+            posRobotRefTerrain.Theta += posRobotRefTerrain.Vtheta * Tech_Sec;
+
+            posRobotRefTerrain.Vx = e.Vx * Math.Cos(posRobotRefTerrain.Theta);
+            posRobotRefTerrain.Vy = e.Vx * Math.Sin(posRobotRefTerrain.Theta);
 
             posRobotRefTerrain.X += posRobotRefTerrain.Vx * Tech_Sec;
             posRobotRefTerrain.Y += posRobotRefTerrain.Vy * Tech_Sec;
-            posRobotRefTerrain.Theta += posRobotRefTerrain.Vtheta * Tech_Sec;
 
             OnCalculatedLocation(robotID, posRobotRefTerrain);
         }

@@ -10,7 +10,8 @@ namespace TrajectoryGeneratorNonHolonomeNS
 {
     public class TrajectoryGeneratorNonHolonome
     {
-        int robotId;
+        int robotId = 10;
+        double Tech_Sec = 1 / 50.0; //ou 50f por float
 
         double samplingFreq;
 
@@ -55,6 +56,7 @@ namespace TrajectoryGeneratorNonHolonomeNS
 
         public void OnPhysicalPositionReceived(object sender, LocationArgs e)
         {
+
             if (robotId == e.RobotId)
             {
                 currentLocationRefTerrain = e.Location;
@@ -67,6 +69,14 @@ namespace TrajectoryGeneratorNonHolonomeNS
         void CalculateGhostPosition()
         {
             //A remplir
+            wayPointLocation.Theta = Math.Atan2(wayPointLocation.Y - currentLocationRefTerrain.Y, 
+                                                wayPointLocation.X - currentLocationRefTerrain.X);
+
+            ghostLocationRefTerrain.Theta = wayPointLocation.Theta;
+            //ghostLocationRefTerrain.Vtheta = 
+
+
+
 
             //On renvoie la position du ghost pour affichage
             OnGhostLocation(robotId, ghostLocationRefTerrain);

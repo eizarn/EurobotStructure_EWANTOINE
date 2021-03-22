@@ -25,6 +25,10 @@ namespace TrajectoryGeneratorNonHolonomeNS
         AsservissementPID PID_Position_Lineaire;
         AsservissementPID PID_Position_Angulaire;
 
+        //trucs du ghost state machine
+        public enum GhostState { idle, rotation, avance };
+        GhostState ghostState = GhostState.idle;
+
         public TrajectoryGeneratorNonHolonome(int id)
         {
             robotId = id;
@@ -49,7 +53,7 @@ namespace TrajectoryGeneratorNonHolonomeNS
         {
             Location old_currectLocation = currentLocationRefTerrain;
             currentLocationRefTerrain = new Location(x, y, theta, 0, 0, 0);
-            wayPointLocation = new Location(x, y, theta, 0, 0, 0);
+            wayPointLocation = new Location(100, 100, theta, 0, 0, 0);
             ghostLocationRefTerrain = new Location(x, y, theta, 0, 0, 0);
             PIDPositionReset();
         }
@@ -68,12 +72,61 @@ namespace TrajectoryGeneratorNonHolonomeNS
 
         void CalculateGhostPosition()
         {
+
+            switch(ghostState)
+            {
+                case GhostState.idle:
+                    Console.WriteLine("prout");
+
+                    ghostLocationRefTerrain.Vx = 0;
+                    ghostLocationRefTerrain.Vy = 0;
+                    ghostLocationRefTerrain.Vtheta = 0;
+
+                    wayPointLocation.Theta = Math.Atan2(wayPointLocation.Y - currentLocationRefTerrain.Y,
+                                                        wayPointLocation.X - currentLocationRefTerrain.X);
+
+                    if (ghostLocationRefTerrain != wayPointLocation) ghostState = GhostState.rotation;
+
+                    break;
+
+                case GhostState.rotation:
+
+                    double ThetaEcart = Toolbox.ModuloByAngle(ghostLocationRefTerrain.Theta, wayPointLocation.Theta);
+
+                    if (ThetaEcart < -0.1) ghostLocationRefTerrain.Vtheta -= accelAngulaire * Tech_Sec;
+                    else if (ThetaEcart > 0.1) ghostLocationRefTerrain.Vtheta += accelAngulaire * Tech_Sec;
+                    else ghostState = GhostState.avance;
+
+                    break;
+
+                case GhostState.avance:
+
+
+                    ghostLocationRefTerrain.X += ghostLocationRefTerrain.Vx * Tech_Sec;
+                    ghostLocationRefTerrain.Y -= ghostLocationRefTerrain.Vy * Tech_Sec;
+
+                    if ((ghostLocationRefTerrain.X == wayPointLocation.X) && (ghostLocationRefTerrain.Y == wayPointLocation.Y))
+                    {
+                        ghostState = GhostState.idle;
+                        Console.WriteLine("Objectif atteint");
+                    }
+
+                    break;
+
+
+            }
+
+
+
+
             //A remplir
-            wayPointLocation.Theta = Math.Atan2(wayPointLocation.Y - currentLocationRefTerrain.Y, 
-                                                wayPointLocation.X - currentLocationRefTerrain.X);
+
+
+
+
+
 
             ghostLocationRefTerrain.Theta = wayPointLocation.Theta;
-            //ghostLocationRefTerrain.Vtheta = 
 
 
 

@@ -624,6 +624,9 @@ namespace RobotInterface
         }
         private void WorldMapDisplay_OnCtrlClickOnHeatMapEvent(object sender, PositionArgs e)
         {
+            //Lancer un évènement custom de type OnSetDestination
+
+
             //RefBoxMessage msg = new RefBoxMessage();
             //msg.command = RefBoxCommand.GOTO;
             //msg.targetTeam = TeamIpAddress;

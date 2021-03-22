@@ -13,11 +13,14 @@ namespace TrajectoryGeneratorNonHolonomeNS
         int robotId = 10;
         double Tech_Sec = 1 / 50.0; //ou 50f por float
 
-        double samplingFreq;
+        double samplingFreq = 50.0;
 
         Location currentLocationRefTerrain;
-        Location wayPointLocation;
+        //Location wayPointLocation;
         Location ghostLocationRefTerrain;
+        
+        PointD destination = new PointD(1, 1);
+        PointD pointCible = new PointD(0,0);
 
         double accelLineaire, accelAngulaire;
         double vitesseLineaireMax, vitesseAngulaireMax;
@@ -36,8 +39,8 @@ namespace TrajectoryGeneratorNonHolonomeNS
             InitPositionPID();
 
             //Initialisation des vitesse et accélérations souhaitées
-            accelLineaire = 0.5; //en m.s-2
-            accelAngulaire = 0.5 * Math.PI * 1.0; //en rad.s-2
+            accelLineaire = 0.02; //en m.s-2
+            accelAngulaire = 0.1 * Math.PI * 1.0; //en rad.s-2 //TODO l'axel richter angulaire = 0.05 
 
             vitesseLineaireMax = 1; //en m.s-1               
             vitesseAngulaireMax = 1 * Math.PI * 1.0; //en rad.s-1
@@ -53,7 +56,7 @@ namespace TrajectoryGeneratorNonHolonomeNS
         {
             Location old_currectLocation = currentLocationRefTerrain;
             currentLocationRefTerrain = new Location(x, y, theta, 0, 0, 0);
-            wayPointLocation = new Location(100, 100, theta, 0, 0, 0);
+            //wayPointLocation = new Location(100, 100, theta, 0, 0, 0);
             ghostLocationRefTerrain = new Location(x, y, theta, 0, 0, 0);
             PIDPositionReset();
         }
@@ -70,65 +73,95 @@ namespace TrajectoryGeneratorNonHolonomeNS
             }
         }
 
+
         void CalculateGhostPosition()
         {
+            double vitesseLinearGhost = Math.Sqrt(Math.Pow(ghostLocationRefTerrain.Vy, 2) + Math.Pow(ghostLocationRefTerrain.Vx, 2));
 
-            switch(ghostState)
+            switch (ghostState)
             {
                 case GhostState.idle:
-                    Console.WriteLine("prout");
+                    Console.WriteLine("Idle");
 
                     ghostLocationRefTerrain.Vx = 0;
                     ghostLocationRefTerrain.Vy = 0;
                     ghostLocationRefTerrain.Vtheta = 0;
 
-                    wayPointLocation.Theta = Math.Atan2(wayPointLocation.Y - currentLocationRefTerrain.Y,
-                                                        wayPointLocation.X - currentLocationRefTerrain.X);
+                   double destination_Theta = Math.Atan2(destination.Y - currentLocationRefTerrain.Y,
+                                                       destination.X - currentLocationRefTerrain.X);
 
-                    if (ghostLocationRefTerrain != wayPointLocation) ghostState = GhostState.rotation;
+                    if (ghostLocationRefTerrain.Theta != destination_Theta) ghostState = GhostState.rotation;
 
                     break;
 
                 case GhostState.rotation:
 
-                    double ThetaEcart = Toolbox.ModuloByAngle(ghostLocationRefTerrain.Theta, wayPointLocation.Theta);
 
-                    if (ThetaEcart < -0.1) ghostLocationRefTerrain.Vtheta -= accelAngulaire * Tech_Sec;
-                    else if (ThetaEcart > 0.1) ghostLocationRefTerrain.Vtheta += accelAngulaire * Tech_Sec;
-                    else ghostState = GhostState.avance;
+                    double ThetaCorrect = Math.Atan2(destination.Y - ghostLocationRefTerrain.Y, destination.X - ghostLocationRefTerrain.X);
+                    double ThetaStopDistance = Math.Pow(ghostLocationRefTerrain.Vtheta, 2) / (2 * accelAngulaire);
+                    double ThetaRestant = ThetaCorrect - Toolbox.Modulo2PiAngleRad(ghostLocationRefTerrain.Theta);
+
+                    if(ThetaStopDistance < ThetaRestant) 
+                        ghostLocationRefTerrain.Vtheta += accelAngulaire * Tech_Sec;
+                    if(ThetaStopDistance >= ThetaRestant)
+                        ghostLocationRefTerrain.Vtheta -= accelAngulaire * Tech_Sec;
+                    if(ThetaRestant <= 0.001)
+                        ghostState = GhostState.avance;
 
                     break;
 
                 case GhostState.avance:
+                    ghostLocationRefTerrain.Vtheta = 0;
+                    //On injecte la position du ghost dans positionGhost
+                    PointD positionGhost = new PointD(ghostLocationRefTerrain.X, ghostLocationRefTerrain.Y);
+
+                    //On calcule un point sur la droite (faut demander pourquoi parce que je ne sais pas)
+                    PointD pointDroite = new PointD(ghostLocationRefTerrain.X + Math.Cos(ghostLocationRefTerrain.Theta),
+                                                    ghostLocationRefTerrain.Y + Math.Cos(ghostLocationRefTerrain.Theta));
+
+                    
+                    //On détermine le point cible Projeté
+                    pointCible = Toolbox.ProjectionPointToLine(destination, positionGhost, pointDroite);
+
+                    //On Calcule la distance d'arret du ghost
+                    double DistanceStop = Math.Pow(vitesseLinearGhost, 2) / (2 * accelLineaire);
+
+                    //On Calcule la distance cible 
+                    double distanceRestante = Math.Sqrt(Math.Pow(pointCible.Y - ghostLocationRefTerrain.Y, 2) + Math.Pow(pointCible.X - ghostLocationRefTerrain.X, 2));
+
+                    //Calcule des angles
+                    double angleCible = Math.Atan2(destination.Y - ghostLocationRefTerrain.Y, destination.X - ghostLocationRefTerrain.X);
+                    double angleRobotCible = Toolbox.ModuloByAngle(ghostLocationRefTerrain.Theta, angleCible) - ghostLocationRefTerrain.Theta;
 
 
-                    ghostLocationRefTerrain.X += ghostLocationRefTerrain.Vx * Tech_Sec;
-                    ghostLocationRefTerrain.Y -= ghostLocationRefTerrain.Vy * Tech_Sec;
-
-                    if ((ghostLocationRefTerrain.X == wayPointLocation.X) && (ghostLocationRefTerrain.Y == wayPointLocation.Y))
+                    if(DistanceStop < Math.Abs(distanceRestante))
                     {
-                        ghostState = GhostState.idle;
-                        Console.WriteLine("Objectif atteint");
+                        if(Math.Abs(vitesseLinearGhost) < vitesseLineaireMax)
+                        {
+                            if (Math.Abs(angleRobotCible) < Math.PI / 2)
+                                vitesseLinearGhost += accelLineaire * Tech_Sec;
+                            else
+                                vitesseLinearGhost -= accelLineaire * Tech_Sec;
+                        }
+                    }
+                    else
+                    {
+                    //Freins shifter pro
+                        if(Math.Abs(vitesseLinearGhost) < Math.PI/2)
+                                vitesseLinearGhost -= accelLineaire * Tech_Sec;
+                        else
+                                vitesseLinearGhost += accelLineaire * Tech_Sec;
                     }
 
+                    ghostLocationRefTerrain.X += (vitesseLinearGhost * 1/Tech_Sec) * Math.Cos(ghostLocationRefTerrain.Theta);
+                    ghostLocationRefTerrain.Y += (vitesseLinearGhost * 1/Tech_Sec) * Math.Sin(ghostLocationRefTerrain.Theta);
+                    if (distanceRestante < 0.002)
+                        ghostState = GhostState.idle;
                     break;
-
-
             }
 
 
-
-
-            //A remplir
-
-
-
-
-
-
-            ghostLocationRefTerrain.Theta = wayPointLocation.Theta;
-
-
+            ghostLocationRefTerrain.Theta += ghostLocationRefTerrain.Vtheta * Tech_Sec;
 
 
             //On renvoie la position du ghost pour affichage

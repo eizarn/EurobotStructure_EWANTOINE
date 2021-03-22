@@ -100,7 +100,7 @@ namespace Utilities
             return Math.Abs(dot);
         }
         
-        public static double DistancePointToSegment(PointD pt, PointD ptSeg1, PointD ptSeg2)
+        public static PointD ProjectionPointToLine(PointD pt, PointD ptSeg1, PointD ptSeg2)
         {
             var A = pt.X - ptSeg1.X;
             var B = pt.Y - ptSeg1.Y;
@@ -115,27 +115,10 @@ namespace Utilities
 
             double xx, yy;
 
-            if (param < 0)
-            {
-                xx = ptSeg1.X;
-                yy = ptSeg1.Y;
-            }
-            else if (param > 1)
-            {
-                xx = ptSeg2.X;
-                yy = ptSeg2.Y;
-            }
-            else
-            {
-                xx = ptSeg1.X + param * C;
-                yy = ptSeg1.Y + param * D;
-            }
+            xx = ptSeg1.X + param * C;
+            yy = ptSeg1.Y + param * D;
 
-            var dx = pt.X - xx;
-            var dy = pt.Y - yy;
-
-            double distance = Math.Sqrt(dx * dx + dy * dy);
-            return distance;            
+            return new PointD(xx, yy);            
         }
 
         public static PointD GetInterceptionLocation(Location target, Location hunter, double huntingSpeed)

@@ -624,6 +624,7 @@ namespace RobotInterface
         }
         private void WorldMapDisplay_OnCtrlClickOnHeatMapEvent(object sender, PositionArgs e)
         {
+            OnCtrlClick(e);
             //RefBoxMessage msg = new RefBoxMessage();
             //msg.command = RefBoxCommand.GOTO;
             //msg.targetTeam = TeamIpAddress;
@@ -857,6 +858,13 @@ namespace RobotInterface
         private void worldMapDisplayStrategy_Loaded(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        public event EventHandler<PositionArgs> OnCtrlClickEvent;
+
+        public virtual void OnCtrlClick(PositionArgs pos)
+        {
+            OnCtrlClickEvent?.Invoke(this, pos);
         }
 
         //private void CheckBoxEnablePowerMonitoringData_Checked(object sender, RoutedEventArgs e)

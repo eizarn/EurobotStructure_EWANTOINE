@@ -110,6 +110,8 @@ namespace RobotEurobot2Roues
             /// Sur evenement xx        -->>        Action a effectuer
             /// 
 
+            interfaceRobot.OnCtrlClickEvent += trajectoryGenerator.SetPosition;
+
             /// Affichage des évènements en provenance du uC
             robotMsgGenerator.OnMessageToDisplaySpeedPolarPidSetupEvent += interfaceRobot.OnMessageToDisplayPolarSpeedPidSetupReceived;
             robotMsgGenerator.OnMessageToDisplaySpeedIndependantPidSetupEvent += interfaceRobot.OnMessageToDisplayIndependantSpeedPidSetupReceived;
@@ -161,6 +163,8 @@ namespace RobotEurobot2Roues
 
             /// Affichage des infos en provenance du strategyManager
             strategyManager.OnTextMessageEvent += interfaceRobot.AppendConsole;
+
+            /// On s'abonne pour pouvoir cliquer sur la map et faire déplacer le ghost sur le point en question
 
 
         }

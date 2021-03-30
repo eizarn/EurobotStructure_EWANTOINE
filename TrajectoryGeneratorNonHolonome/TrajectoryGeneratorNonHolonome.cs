@@ -10,13 +10,12 @@ namespace TrajectoryGeneratorNonHolonomeNS
 {
     public class TrajectoryGeneratorNonHolonome
     {
+
+        
         int robotId = 10;
         double Tech_Sec = 1 / 50.0; //ou 50f por float
-
-        double samplingFreq = 50.0;
-
+      
         Location currentLocationRefTerrain;
-        //Location wayPointLocation;
         Location ghostLocationRefTerrain;
         
         PointD destination = new PointD(1, 1);
@@ -61,11 +60,18 @@ namespace TrajectoryGeneratorNonHolonomeNS
             PIDPositionReset();
         }
 
+        public void SetPosition(object sender, PositionArgs e)
+        {
+            ghostState = GhostState.rotation;
+            destination = new PointD(e.X, e.Y);
+        }
+
         public void OnPhysicalPositionReceived(object sender, LocationArgs e)
         {
 
             if (robotId == e.RobotId)
             {
+
                 currentLocationRefTerrain = e.Location;
                 CalculateGhostPosition();
                 PIDPosition();

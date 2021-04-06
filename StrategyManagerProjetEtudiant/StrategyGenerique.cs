@@ -183,10 +183,10 @@ namespace StrategyManagerProjetEtudiantNS
             OnSetAsservissementModeEvent?.Invoke(this, new ByteEventArgs { Value = val });
         }
 
-        public event EventHandler<SpeedConsigneToMotorArgs> OnSetSpeedConsigneToMotor;
-        public virtual void OnSetSpeedConsigneToMotorEvent(object sender, SpeedConsigneToMotorArgs e)
+        public event EventHandler<SpeedConsigneToMotorArgs> OnSetSpeedConsigneToMotorEvent;
+        public virtual void OnSetSpeedConsigneToMotor(object sender, SpeedConsigneToMotorArgs e)
         {
-            OnSetSpeedConsigneToMotor?.Invoke(sender, e);
+            OnSetSpeedConsigneToMotorEvent?.Invoke(sender, e);
         }
 
         public event EventHandler<BoolEventArgs> OnEnableDisableMotorCurrentDataEvent;

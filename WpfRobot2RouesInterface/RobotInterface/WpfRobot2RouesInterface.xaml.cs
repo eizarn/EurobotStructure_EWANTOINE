@@ -624,16 +624,15 @@ namespace RobotInterface
         }
         private void WorldMapDisplay_OnCtrlClickOnHeatMapEvent(object sender, PositionArgs e)
         {
-            OnCtrlClick(e);
-            //RefBoxMessage msg = new RefBoxMessage();
-            //msg.command = RefBoxCommand.GOTO;
-            //msg.targetTeam = TeamIpAddress;
-            //msg.robotID = (int)TeamId.Team1 + (int)RobotId.Robot1;
-            //msg.posX = e.X;
-            //msg.posY = e.Y;
-            //msg.posTheta = 0;
-            //OnRefereeBoxReceivedCommand(msg);
+            OnCtrlClickOnLocalWorldMap(e);
         }
+
+        public event EventHandler<PositionArgs> OnCtrlClickOnLocalWorldMapEvent;
+        public virtual void OnCtrlClickOnLocalWorldMap(PositionArgs e)
+        {
+            OnCtrlClickOnLocalWorldMapEvent?.Invoke(this, e);
+        }
+
         #region OUTPUT EVENT
         //OUTPUT EVENT
         public delegate void EnableDisableMotorsEventHandler(object sender, BoolEventArgs e);

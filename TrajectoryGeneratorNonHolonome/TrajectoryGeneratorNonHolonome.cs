@@ -83,6 +83,12 @@ namespace TrajectoryGeneratorNonHolonomeNS
                 PIDPosition();
             }
         }
+        
+        public void OnWaypointReceived(object sender, PositionArgs destination)
+        {
+            /// Mise à jour du waypoint courant
+            wayPointLocation.X = destination.X;
+            wayPointLocation.Y = destination.Y;
 
 
         void CalculateGhostPosition()

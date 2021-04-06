@@ -634,6 +634,13 @@ namespace RobotInterface
             //msg.posTheta = 0;
             //OnRefereeBoxReceivedCommand(msg);
         }
+
+        public event EventHandler<PositionArgs> OnCtrlClickOnLocalWorldMapEvent;
+        public virtual void OnCtrlClickOnLocalWorldMap(PositionArgs e)
+        {
+            OnCtrlClickOnLocalWorldMapEvent?.Invoke(this, e);
+        }
+
         #region OUTPUT EVENT
         //OUTPUT EVENT
         public delegate void EnableDisableMotorsEventHandler(object sender, BoolEventArgs e);

@@ -69,7 +69,7 @@ namespace StrategyManagerProjetEtudiantNS
             On2WheelsIndependantSpeedPIDSetup(pM1: KpIndependant, iM1: KiIndependant, 0.0, pM2: KpIndependant, iM2: KiIndependant, 0,
                 pM1Limit: 4, iM1Limit: 4, 0, pM2Limit: 4.0, iM2Limit: 4.0, 0);
 
-            OnSetAsservissementMode((byte)AsservissementMode.Independant4Wheels);
+            OnSetAsservissementMode((byte)AsservissementMode.Independant2Wheels);
         }
 
         public override void IterateStateMachines()

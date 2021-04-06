@@ -12,12 +12,14 @@ namespace StrategyManagerProjetEtudiantNS
 {
     public enum TaskDemoMoveState
     {
-        Arret,
-        ArretEnCours,
-        Avance,
-        AvanceEnCours,
-        Recule,
-        ReculeEnCours,
+        GotoPt1,
+        GotoPt1EnCours,
+        GotoPt2,
+        GotoPt2EnCours,
+        GotoPt3,
+        GotoPt3EnCours,
+        GotoPt4,
+        GotoPt4EnCours,
     }
 
     public class TaskDemoMove
@@ -46,7 +48,7 @@ namespace StrategyManagerProjetEtudiantNS
 
         StrategyEurobot parent;
         Thread TaskThread;
-        public TaskDemoMoveState state = TaskDemoMoveState.Arret;
+        public TaskDemoMoveState state = TaskDemoMoveState.GotoPt1;
 
         Stopwatch sw = new Stopwatch();
         
@@ -72,32 +74,44 @@ namespace StrategyManagerProjetEtudiantNS
             {
                 switch (state)
                 {
-                    case TaskDemoMoveState.Arret:
+                    case TaskDemoMoveState.GotoPt1:
                         sw.Restart();
+                        //Action à effectuer : compléter
                         break;
-                    case TaskDemoMoveState.ArretEnCours:
-                        if (sw.ElapsedMilliseconds > 3000)
+                    case TaskDemoMoveState.GotoPt1EnCours:
+                        if (sw.ElapsedMilliseconds > 8000)
                         {
-                            state = TaskDemoMoveState.Avance;
+                            state = TaskDemoMoveState.GotoPt2;
                         }
                         break;
-                    case TaskDemoMoveState.Avance:
+                    case TaskDemoMoveState.GotoPt2:
                         sw.Restart();
-                        state = TaskDemoMoveState.AvanceEnCours;
+                        //Action à effectuer : compléter
+                        state = TaskDemoMoveState.GotoPt2EnCours;
                         break;
-                    case TaskDemoMoveState.AvanceEnCours:
-                        if (sw.ElapsedMilliseconds>3000)
+                    case TaskDemoMoveState.GotoPt2EnCours:
+                        if (sw.ElapsedMilliseconds>8000)
                         {
-                            state = TaskDemoMoveState.Recule;
+                            state = TaskDemoMoveState.GotoPt3;
                         }                            
                         break;
-                    case TaskDemoMoveState.Recule:
+                    case TaskDemoMoveState.GotoPt3:
                         sw.Restart();
-                        state = TaskDemoMoveState.ReculeEnCours;
+                        //Action à effectuer : compléter
+                        state = TaskDemoMoveState.GotoPt3EnCours;
                         break;
-                    case TaskDemoMoveState.ReculeEnCours:
-                        if (sw.ElapsedMilliseconds > 2000)
-                            state = TaskDemoMoveState.Arret;
+                    case TaskDemoMoveState.GotoPt3EnCours:
+                        if (sw.ElapsedMilliseconds > 8000)
+                            state = TaskDemoMoveState.GotoPt4;
+                        break;
+                    case TaskDemoMoveState.GotoPt4:
+                        sw.Restart();
+                        //Action à effectuer : compléter
+                        state = TaskDemoMoveState.GotoPt4EnCours;
+                        break;
+                    case TaskDemoMoveState.GotoPt4EnCours:
+                        if (sw.ElapsedMilliseconds > 8000)
+                            state = TaskDemoMoveState.GotoPt1;
                         break;
                     default:
                         break;

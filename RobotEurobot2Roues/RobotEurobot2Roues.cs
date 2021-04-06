@@ -112,7 +112,7 @@ namespace RobotEurobot2Roues
             /// Sur evenement xx        -->>        Action a effectuer
             /// 
 
-            interfaceRobot.OnCtrlClickEvent += trajectoryGenerator.SetPosition;
+            interfaceRobot.OnCtrlClickOnLocalWorldMapEvent += trajectoryGenerator.SetPosition;
 
             /// Affichage des évènements en provenance du uC
             robotMsgGenerator.OnMessageToDisplaySpeedPolarPidSetupEvent += interfaceRobot.OnMessageToDisplayPolarSpeedPidSetupReceived;

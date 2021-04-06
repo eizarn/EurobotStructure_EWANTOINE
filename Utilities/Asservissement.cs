@@ -69,5 +69,26 @@
             }
             else return 0;
         }
+
+        public double CalculatePDoutput(double error, double ElapsedTimeBetweenCalculation)
+        {
+            if (ElapsedTimeBetweenCalculation > 0)
+            {
+                //Le principe de calcul est le suivant :
+                //On veut borner les corrections sur chaque terme à une valeur donnée, par exemple ProportionalLimit pour la contribution de P à la correction
+                //Sachant que correctionP = Kp*erreur, il faut donc borner au préalable erreur à ProportionalLimit / Kp
+
+                double erreurBornee = Toolbox.LimitToInterval(error, -ProportionalLimit / Kp, ProportionalLimit / Kp);
+                correctionP = Kp * erreurBornee;
+
+                double derivee = (error - errorT_1) / ElapsedTimeBetweenCalculation; // * SampleFreq;
+                double deriveeBornee = Toolbox.LimitToInterval(derivee, -DerivationLimit / Kd, DerivationLimit / Kd);
+                errorT_1 = error;
+                correctionD = deriveeBornee * Kd;
+
+                return correctionP + correctionD;
+            }
+            else return 0;
+        }
     }
 }

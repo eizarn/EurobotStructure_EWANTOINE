@@ -24,9 +24,11 @@ namespace TrajectoryGeneratorNonHolonomeNS
         double accelLineaire, accelAngulaire;
         double accelLineaireMax, accelAngulaireMax;
         double vitesseLineaireMax, vitesseAngulaireMax;
+        //double vitesseLinearGhost = Math.Sqrt(Math.Pow(ghostLocationRefTerrain.Vy, 2) + Math.Pow(ghostLocationRefTerrain.Vx, 2));
+        double vitesseLinearGhost = 0;
         int direction;
 
-        double toleranceAngulaire, toleranceLineaire;
+        double toleranceAngulaire = 0.01, toleranceLineaire = 0.1;
 
         AsservissementPID PID_Position_Lineaire;
         AsservissementPID PID_Position_Angulaire;
@@ -42,17 +44,17 @@ namespace TrajectoryGeneratorNonHolonomeNS
             InitPositionPID();
 
             //Initialisation des vitesse et accélérations souhaitées
-            accelLineaireMax = 0.05; //en m.s-2
-            accelAngulaireMax = 0.2 * Math.PI * 1.0; //en rad.s-2 //TODO l'axel richter angulaire = 0.
+            accelLineaireMax = 3; //0.5; //en m.s-2
+            accelAngulaireMax = 2/*0.2*/ * Math.PI * 1.0; //en rad.s-2 //TODO l'axel richter angulaire = 0.
 
-            vitesseLineaireMax = 1; //en m.s-1               
+            vitesseLineaireMax = 1; //1 //en m.s-1               
             vitesseAngulaireMax = 1 * Math.PI * 1.0; //en rad.s-1
         }
 
         void InitPositionPID()
         {
-            PID_Position_Lineaire = new AsservissementPID(20.0, 10.0, 0, 100, 100, 1);
-            PID_Position_Angulaire = new AsservissementPID(20.0, 10.0, 0, 5 * Math.PI, 5 * Math.PI, Math.PI);
+            PID_Position_Lineaire = new AsservissementPID(0, 0, 0, 100, 100, 1);
+            PID_Position_Angulaire = new AsservissementPID(0, 0, 1, 5 * Math.PI, 5 * Math.PI, Math.PI);
         }
 
         public void InitRobotPosition(double x, double y, double theta)
@@ -78,15 +80,14 @@ namespace TrajectoryGeneratorNonHolonomeNS
 
                 currentLocationRefTerrain = e.Location;
                 CalculateGhostPosition();
-               // PIDPosition();
-
+                PIDPosition();
             }
         }
 
 
         void CalculateGhostPosition()
         {
-            double vitesseLinearGhost = Math.Sqrt(Math.Pow(ghostLocationRefTerrain.Vy, 2) + Math.Pow(ghostLocationRefTerrain.Vx, 2));
+            
 
             switch (ghostState)
             {
@@ -100,20 +101,17 @@ namespace TrajectoryGeneratorNonHolonomeNS
                     accelAngulaire = accelAngulaireMax;
                     accelLineaire = accelLineaireMax;
 
-                    toleranceAngulaire = 0.002;
-                    toleranceLineaire = 0.002;
-
                     double destination_Theta = Math.Atan2(destination.Y - currentLocationRefTerrain.Y,
                                                           destination.X - currentLocationRefTerrain.X);
 
-                    if (Math.Abs(destination_Theta - ghostLocationRefTerrain.Theta) < 0.001)
+                    if (Math.Abs(destination_Theta - ghostLocationRefTerrain.Theta) < toleranceAngulaire)
                     {
                         ghostState = GhostState.rotation;
 
-                        if (destination_Theta > ghostLocationRefTerrain.Theta)
-                            direction = 1;
-                        else
-                            direction = -1;
+                        //if (destination_Theta > ghostLocationRefTerrain.Theta)
+                        //    direction = 1;
+                        //else
+                        //    direction = -1;
                     }
 
                     break;
@@ -122,12 +120,10 @@ namespace TrajectoryGeneratorNonHolonomeNS
 
                     double ThetaDestination = Math.Atan2(destination.Y - ghostLocationRefTerrain.Y, destination.X - ghostLocationRefTerrain.X);
                     double ThetaRestant = ThetaDestination - Toolbox.Modulo2PiAngleRad(ghostLocationRefTerrain.Theta);
-                    Console.WriteLine("Rotation");
                     double ThetaStopDistance = Math.Pow(ghostLocationRefTerrain.Vtheta, 2) / (2 * accelAngulaire);
 
                     if (ThetaRestant > 0)
                     {
-                        Console.WriteLine("Angle restant > 0");
                         if (ghostLocationRefTerrain.Vtheta < 0) // anormal
                             ghostLocationRefTerrain.Vtheta -= accelAngulaire * Tech_Sec;
                         else
@@ -143,7 +139,6 @@ namespace TrajectoryGeneratorNonHolonomeNS
                     }
                     else // l'angle restant à parcourir est inférieur à 0
                     {
-                        Console.WriteLine("Angle restant < 0");
                         if (ghostLocationRefTerrain.Vtheta > 0) // anormal
                             ghostLocationRefTerrain.Vtheta += accelAngulaire * Tech_Sec;
                         else
@@ -166,63 +161,95 @@ namespace TrajectoryGeneratorNonHolonomeNS
                     break;
 
                 case GhostState.avance:
-
-                    Console.WriteLine("Avance");
+ 
                     ghostLocationRefTerrain.Vtheta = 0;
                     //On injecte la position du ghost dans positionGhost
                     PointD positionGhost = new PointD(ghostLocationRefTerrain.X, ghostLocationRefTerrain.Y);
 
-                    //On calcule un point sur la droite (faut demander pourquoi parce que je ne sais pas)
+                    //On calcule un point sur la droite
                     PointD pointDroite = new PointD(ghostLocationRefTerrain.X + Math.Cos(ghostLocationRefTerrain.Theta),
-                                                    ghostLocationRefTerrain.Y + Math.Cos(ghostLocationRefTerrain.Theta));
+                                                    ghostLocationRefTerrain.Y + Math.Sin(ghostLocationRefTerrain.Theta));
 
-                    
-                    //On détermine le point cible Projeté
-                    pointCible = Toolbox.ProjectionPointToLine(destination, positionGhost, pointDroite);
 
                     //On Calcule la distance d'arret du ghost
                     double DistanceStop = Math.Pow(vitesseLinearGhost, 2) / (2 * accelLineaire);
 
                     //On Calcule la distance cible 
-                    double distanceRestante = Math.Sqrt(Math.Pow(pointCible.Y - ghostLocationRefTerrain.Y, 2) + Math.Pow(pointCible.X - ghostLocationRefTerrain.X, 2));
+                    double distanceRestante = Math.Sqrt(Math.Pow(destination.Y - ghostLocationRefTerrain.Y, 2) + Math.Pow(destination.X - ghostLocationRefTerrain.X, 2));
 
-                    //Calcule des angles
+
+                    //Calcul des angles
                     double angleCible = Math.Atan2(destination.Y - ghostLocationRefTerrain.Y, destination.X - ghostLocationRefTerrain.X);
-                    double angleRobotCible = Toolbox.ModuloByAngle(ghostLocationRefTerrain.Theta, angleCible) - ghostLocationRefTerrain.Theta;
+                    double angleRobotCible = angleCible - Toolbox.ModuloByAngle(angleCible, ghostLocationRefTerrain.Theta);
 
-                    if (DistanceStop < Math.Abs(distanceRestante))
+                    //On va regarder si la cible est devant ou derrière nous
+                    bool cibleDevant = true;
+                    if (Math.Abs(angleRobotCible) > Math.PI / 2)
+                        cibleDevant = false;
+
+                    double CoeffMaj = 2;
+
+                    if(cibleDevant)
                     {
-                        if(Math.Abs(vitesseLinearGhost) < vitesseLineaireMax)
+                        Console.WriteLine("cible Devant");
+                        //On est dans le cas où la cible est devant vous, donc notre vitesse doit absolument être POSITIVE !
+                        //Donc on se questionne : " EST CE QUE NOTRE VITESSE EST BIEN POSITIVE ?
+                        if (vitesseLinearGhost < 0)
                         {
-                            if (Math.Abs(angleRobotCible) < Math.PI / 2)
-                                vitesseLinearGhost += accelLineaire * Tech_Sec;
+                            //On tombe dans le cas où ce n'est pas positive donc on inverse le sens de la vitesse
+                            vitesseLinearGhost += accelLineaire * Tech_Sec;
+                        }     
+                        else
+                        {
+                            if(distanceRestante > DistanceStop)
+                            {
+                                //On regarde si on est à Vmax 
+                                if(Math.Abs(vitesseLinearGhost) < vitesseLineaireMax)
+                                    vitesseLinearGhost += accelLineaire * Tech_Sec;
+                            }
                             else
                                 vitesseLinearGhost -= accelLineaire * Tech_Sec;
                         }
+
                     }
                     else
                     {
-                        //Freins shifter pro
-                        if (Math.Abs(vitesseLinearGhost) < vitesseLineaireMax)
+                        Console.WriteLine("cible Derrière");
+                        //On est dans le cas où la cible est derrière nous, donc notre vitesse doit absolument être NÉGATIVE ! 
+                        //Donc on se questionne : "EST CE QUE LA VITESSE EST BIEN NÉGATIVE ?" 
+
+                        if (vitesseLinearGhost > 0)
                         {
-                            if (Math.Abs(angleRobotCible) < Math.PI / 2) //vitesseLinearGhost) < Math.PI / 2) // ??????????????????????????
-                                vitesseLinearGhost -= accelLineaire * Tech_Sec;
+                            //On inverse le sens de l'acceleration pour revenir à une vitesse négative
+                            vitesseLinearGhost -= accelLineaire * Tech_Sec;
+                        }
+                        else
+                        {
+                            if(distanceRestante > DistanceStop)
+                            {
+                                //On regarde si on est à Vmax
+                                if (Math.Abs(vitesseLinearGhost) < vitesseLineaireMax)
+                                    vitesseLinearGhost -= accelLineaire * Tech_Sec;
+                            }
                             else
                                 vitesseLinearGhost += accelLineaire * Tech_Sec;
                         }
+                       
                     }
 
-                    if (direction != Math.Sign(Math.PI / 2 - Math.Abs(angleRobotCible)))
+                    if (distanceRestante < toleranceLineaire)
                     {
-                        direction = -direction;
-                    }
-
-                    ghostLocationRefTerrain.X += (vitesseLinearGhost * 1 / Tech_Sec) * Math.Cos(ghostLocationRefTerrain.Theta);
-                    ghostLocationRefTerrain.Y += (vitesseLinearGhost * 1 / Tech_Sec) * Math.Sin(ghostLocationRefTerrain.Theta);
-                    
-                    if (distanceRestante < 0.01)
                         ghostState = GhostState.idle;
-                    break;
+                        Console.WriteLine("Erreur: {0}", distanceRestante);
+                    }
+                        
+                   ghostLocationRefTerrain.X += (vitesseLinearGhost *  Tech_Sec) * Math.Cos(ghostLocationRefTerrain.Theta);
+                   ghostLocationRefTerrain.Y += (vitesseLinearGhost *  Tech_Sec) * Math.Sin(ghostLocationRefTerrain.Theta);
+
+                   Console.WriteLine(vitesseLinearGhost);
+                 
+                   
+                   break;
             }
 
             //On renvoie la position du ghost pour affichage
@@ -231,9 +258,27 @@ namespace TrajectoryGeneratorNonHolonomeNS
 
         void PIDPosition()
         {
-            //A remplir
-            double vLineaireRobot=0, vAngulaireRobot=0;
+            //Calcul de l'erreur Angulaire
+            double erreur_Angulaire = ghostLocationRefTerrain.Theta - currentLocationRefTerrain.Theta;
+            double vAngulaireRobot = PID_Position_Angulaire.CalculatePDoutput(erreur_Angulaire, Tech_Sec);
 
+            //Calcul de l'erreur linéaire ghostLocationRefTerrain / currentLocationRefTerrain
+            PointD GhostPosition = new PointD(ghostLocationRefTerrain.X, ghostLocationRefTerrain.Y);
+            PointD pointSegRobot2 = new PointD(currentLocationRefTerrain.X + Math.Cos(currentLocationRefTerrain.Theta), currentLocationRefTerrain.Y + Math.Sin(currentLocationRefTerrain.Theta));
+            PointD pointSegRobot1 = new PointD(currentLocationRefTerrain.X, currentLocationRefTerrain.Y);
+            PointD Projection_ghost = Toolbox.ProjectionPointToLine(GhostPosition, pointSegRobot1, pointSegRobot2);
+
+            double thetaCible = Math.Atan2(ghostLocationRefTerrain.Y - currentLocationRefTerrain.Y, ghostLocationRefTerrain.X - currentLocationRefTerrain.X);
+            double ecratCapCibleRobot = thetaCible - Toolbox.ModuloByAngle(thetaCible, currentLocationRefTerrain.Theta);
+
+            int param = 1;
+            if (Math.Abs(ecratCapCibleRobot) > Math.PI / 2)
+                param = -1;
+
+            double ErreurLin = Toolbox.Distance(Projection_ghost, new PointD(currentLocationRefTerrain.X, currentLocationRefTerrain.Y)) * param;
+            Console.WriteLine("ErreurLin: {0}", ErreurLin);
+
+            double vLineaireRobot = PID_Position_Lineaire.CalculatePDoutput(ErreurLin, Tech_Sec);
 
             //Si tout c'est bien passé, on envoie les vitesses consigne.
             OnSpeedConsigneToRobot(robotId, (float)vLineaireRobot, (float)vAngulaireRobot);

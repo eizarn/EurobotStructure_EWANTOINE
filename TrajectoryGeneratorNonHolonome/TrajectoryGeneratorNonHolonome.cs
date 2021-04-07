@@ -54,8 +54,8 @@ namespace TrajectoryGeneratorNonHolonomeNS
 
         void InitPositionPID()
         {
-            PID_Position_Lineaire = new AsservissementPID(0, 0, 0, 100, 100, 1);
-            PID_Position_Angulaire = new AsservissementPID(0, 0, 1, 5 * Math.PI, 5 * Math.PI, Math.PI);
+            PID_Position_Lineaire = new AsservissementPID(12, 0, 2.1, 100, 100, 1); //D à 2.1 
+            PID_Position_Angulaire = new AsservissementPID(30, 0, 5.95, 5 * Math.PI, 5 * Math.PI, Math.PI); // D à 5,95 et K à 30
         }
 
         public void InitRobotPosition(double x, double y, double theta)
